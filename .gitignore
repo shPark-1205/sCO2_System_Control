@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE metadata
+.idea/
+.vscode/
+
+# Generated experiment data and plots
+data/
+**/data/
+*.png
+*.jpg
+*.jpeg
+
+# Local calibration/data workbooks
+*.xlsx
+*.xls
+*.csv
+
+# Vendor/licensed binaries and REFPROP files
+*.dll
+*.exe
+*.lib
+*.pdb
+FLUIDS/
+**/FLUIDS/
+
+# OS metadata
+Thumbs.db
+.DS_Store
