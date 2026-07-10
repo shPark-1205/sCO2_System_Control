@@ -43,8 +43,21 @@ CONFIG = {
     "plot_temp_max": 27,
     "save_image_interval": 30,
 
-    # --- Voltage to Temperature Conversion Coefficients ---
-    "temp_conversion_coeffs": [0.0, 2.592800E-2, -7.602961E-7, 4.637791E-11, -2.165394E-15, 6.048144E-20, -7.293422E-25]
+    # --- Thermocouple Type Selection ---
+    # Supported types: "J", "K", "T"
+    "tc_type": "T",
+}
+
+THERMOCOUPLE_COEFFS = {
+    # NIST inverse polynomial coefficients converted for voltage in microvolts.
+    # These ranges cover non-negative thermocouple voltage regions.
+    "J": [0.0, 1.978425E-2, -2.001204E-7, 1.036969E-11, -2.549687E-16,
+          3.585153E-21, -5.344285E-26, 5.099890E-31],
+    "K": [0.0, 2.508355E-2, 7.860106E-8, -2.503131E-10, 8.315270E-14,
+          -1.228034E-17, 9.804036E-22, -4.413030E-26, 1.057734E-30,
+          -1.052755E-35],
+    "T": [0.0, 2.592800E-2, -7.602961E-7, 4.637791E-11, -2.165394E-15,
+          6.048144E-20, -7.293422E-25],
 }
 
 
@@ -59,6 +72,11 @@ class DMM_Logger:
         self.config = config
         self.channels = self.config['rtd_channels_str'].split(', ')
         self.num_sensors = len(self.channels)
+        self.tc_type = self.config.get('tc_type', 'T').upper()
+
+        if self.tc_type not in THERMOCOUPLE_COEFFS:
+            valid_types = ", ".join(sorted(THERMOCOUPLE_COEFFS))
+            raise ValueError(f"Unsupported thermocouple type '{self.tc_type}'. Choose one of: {valid_types}")
 
         self.time_title = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         self.make_dir()
@@ -289,7 +307,7 @@ class DMM_Logger:
         Converts a raw voltage measurement (in Volts) into a temperature
         value (in Celsius) using a polynomial equation defined in the config.
         """
-        C = self.config['temp_conversion_coeffs']
+        C = THERMOCOUPLE_COEFFS[self.tc_type]
         v_uv = voltage_v * 1E6
         temp = sum(c * (v_uv ** i) for i, c in enumerate(C))
         return temp
