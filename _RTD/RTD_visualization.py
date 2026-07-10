@@ -277,10 +277,6 @@ class RealTimeDAQLogger:
 
         log_line = f"{self.run_count:4d} | {self.timestamps[-1]:>10} | {self.elapsed_seconds[-1]:8.1f} |"
 
-        # Find the correct calibration column index for each channel
-        calib_df = pd.read_excel(self.config['calibration_file_path'])
-        # channel_to_col_idx = {int(col): i for i, col in enumerate(calib_df.columns) if str(col).isdigit()}
-
         for i, ch in enumerate(self.channels):
             resistance = avg_resistances.get(ch, 0.0)
 

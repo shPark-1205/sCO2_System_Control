@@ -93,7 +93,7 @@ class SystemMonitor:
             "pump_in": {"T": [], "P": []}, "pump_out": {"T": [], "P": []},
             "hx_out": {"T": [], "P": []}, "loop_in": {"T": [], "P": []},
             "heater_temp": [], "mass_flow": [], "mass_flow_temp": [], "env_temp": [],
-            "properties": {"points": [{} for _ in range(8)], "errors": []},
+            "properties": {"points": [{} for _ in range(8)], "errors": ["NA"] * 8},
             "raw": {"agilent": []}  # To store raw sensor values (V, Ω) for Excel export
         }
 
@@ -427,7 +427,7 @@ class SystemMonitor:
 
         d = self.data;
         p = d['properties']['points']
-        errs = d['properties']['errors']
+        errs = (d['properties']['errors'] + ["NA"] * 8)[:8]
 
         # Print the formatted data string
         print(

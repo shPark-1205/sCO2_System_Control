@@ -109,8 +109,11 @@ class ExperimentThread(threading.Thread):
     def run(self):
         self.app.log("🚀 Starting integrated experiment sequence.")
 
+        success = False
+
         # --- 1. Connect All Devices ---
         if not self._connect_all():
+            self._cleanup_all()
             self.app.finish_experiment(success=False)
             return
 
@@ -218,7 +221,7 @@ class ExperimentThread(threading.Thread):
             # [Step 6] Return to Home
             # ====================================================
             if self.is_running:
-                self.app.info_label.configure(text="🏠 All steps complete. Returning to Home...", text_color="orange")
+                self.app.set_info("All steps complete. Returning to Home...", "orange")
                 self.app.log("🚜 Returning to Home (0mm)...")
 
                 if self.motor.check_health():
@@ -226,6 +229,7 @@ class ExperimentThread(threading.Thread):
                     self.motor.set_servo(True)
                     if self.motor.move_to_position(0):
                         self.motor.wait_done(timeout=60)
+                success = True
 
         except Exception as e:
             self.app.log(f"❌ Critical Error: {e}")
@@ -234,7 +238,7 @@ class ExperimentThread(threading.Thread):
 
         finally:
             self._cleanup_all()
-            self.app.finish_experiment(success=True)
+            self.app.finish_experiment(success=success and self.is_running)
 
     def _connect_all(self):
         """Attempt to connect all devices."""
@@ -303,8 +307,18 @@ class ExperimentApp(ctk.CTk):
 
         self.thread = None
         self.rows_ui = []
+        self._main_thread_id = threading.get_ident()
 
         self._setup_ui()
+
+    def _on_ui_thread(self):
+        return threading.get_ident() == self._main_thread_id
+
+    def _ui_call(self, callback, *args, **kwargs):
+        if self._on_ui_thread():
+            callback(*args, **kwargs)
+        else:
+            self.after(0, lambda: callback(*args, **kwargs))
 
     def _setup_ui(self):
         # 1. Header
@@ -433,6 +447,10 @@ class ExperimentApp(ctk.CTk):
             self.stop_btn.configure(state="disabled")
 
     def highlight_current_row(self, index):
+        if not self._on_ui_thread():
+            self._ui_call(self.highlight_current_row, index)
+            return
+
         for i, ui in enumerate(self.rows_ui):
             if i == index:
                 ui['frame'].configure(fg_color=["gray85", "gray30"])
@@ -440,6 +458,10 @@ class ExperimentApp(ctk.CTk):
                 ui['frame'].configure(fg_color=["gray90", "gray20"])
 
     def update_sub_status(self, index, stage, state):
+        if not self._on_ui_thread():
+            self._ui_call(self.update_sub_status, index, stage, state)
+            return
+
         ui = self.rows_ui[index]
         target_lbl = ui[stage]
         base_text = {"move": "🚜 Move", "wait": "⏳ Wait", "measure": "📸 Measure"}[stage]
@@ -451,14 +473,25 @@ class ExperimentApp(ctk.CTk):
             target_lbl.configure(text=f"✅ {base_text}", text_color="#00FF00", font=("Arial", 13))
 
     def update_progress(self, value):
-        self.progress_bar.set(value)
+        self._ui_call(self.progress_bar.set, value)
 
     def log(self, message):
+        if not self._on_ui_thread():
+            self._ui_call(self.log, message)
+            return
+
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log_box.insert("end", f"[{timestamp}] {message}\n")
         self.log_box.see("end")
 
+    def set_info(self, text, color="white"):
+        self._ui_call(self.info_label.configure, text=text, text_color=color)
+
     def finish_experiment(self, success):
+        if not self._on_ui_thread():
+            self._ui_call(self.finish_experiment, success)
+            return
+
         self.start_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")
         msg = "Experiment Complete" if success else "Experiment Interrupted"
