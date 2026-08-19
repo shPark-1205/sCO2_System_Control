@@ -247,7 +247,13 @@ class DMM_Logger:
                 min_temp = np.min(all_current_temps)
                 max_temp = np.max(all_current_temps)
                 delta_temp = max_temp - min_temp
-                self.ax.set_ylim(min_temp - delta_temp, max_temp + delta_temp)
+                if delta_temp == 0:
+                    temp_margin = (self.config['plot_temp_max'] - self.config['plot_temp_min']) / 2
+                    if temp_margin <= 0:
+                        temp_margin = 1.0
+                    self.ax.set_ylim(min_temp - temp_margin, max_temp + temp_margin)
+                else:
+                    self.ax.set_ylim(min_temp - delta_temp, max_temp + delta_temp)
 
         if self._count % self.config['save_image_interval'] == 1:
             self.save_plot_image()
