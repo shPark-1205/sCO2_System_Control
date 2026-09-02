@@ -82,7 +82,7 @@ HEATER_POWER_CONFIG = {
 HEATER_LOGGER_CONFIG = {
     "exp_objective": EXP_DATE,
     "exp_sub_objective": EXP_SUB_OBJECTIVE,  # Unified with RTD config
-    "visa_resource_name": "USB0::0x2A8D::0x5101::MY58037064::0::INSTR",
+    "visa_resource_name": "USB0::0x2A8D::0x5101::MY58037069::0::INSTR",
     "voltage_channel": 213,
     "current_channel": 215,
     "shunt_resistance_ohm": 0.1,
